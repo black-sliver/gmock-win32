@@ -1,3 +1,9 @@
+# This Fork
+
+This is a customized fork of gmock-win32 for my stuff. See
+[smalti/gmock-win32](https://github.com/smalti/gmock-win32)
+for the upstream project.
+
 # Overview
 
 [![gmock-win32 lib](https://img.shields.io/badge/gmock-win32-blue)](https://github.com/smalti/gmock-win32)

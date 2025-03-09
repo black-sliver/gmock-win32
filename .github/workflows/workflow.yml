@@ -7,9 +7,15 @@ env:
   strFirstObj: "gmock-win32"
   strDefaultGtestOutput: "test_detail.xml"
 jobs:
-  test-in-windows:
+  test-cl:
+    strategy:
+      matrix:
+        arch: [x86, x64]
+        toolset: [msvc, llvm]
+
     runs-on: windows-latest
-    defaults: 
+    name: test with ${{ matrix.toolset }} cl ${{ matrix.arch }}
+    defaults:
         run:
             working-directory: ${{ env.strDirTests }}
     steps:
@@ -48,18 +54,18 @@ jobs:
           );
           
           $pathMSBuild = vswhere -products * -requires Microsoft.Component.MSBuild -property installationPath -latest;
-          @( 'x86', 'x64' ) | % { $strArch=$_; 
-            if ( 'x64' -eq $strArch ) {
-              $path = join-path $pathMSBuild 'VC/Auxiliary/Build/vcvars64.bat';
-            }
-            else {
-              $path = join-path $pathMSBuild 'VC/Auxiliary/Build/vcvars32.bat';
-            }
-            ; # @insp https://github.com/microsoft/vswhere/wiki/Find-VC
-            cmd /s /c """$path"" $args && set" | where { $_ -match '(\w+)=(.*)' } | foreach {
-              $null = new-item -force -path "Env:\$($Matches[1])" -value $Matches[2];
-            }
-          @( 'msvc', 'llvm' ) | % { $strToolSet=$_; 
+          $strArch='${{ matrix.arch }}'
+          if ( 'x64' -eq $strArch ) {
+            $path = join-path $pathMSBuild 'VC/Auxiliary/Build/vcvars64.bat';
+          }
+          else {
+            $path = join-path $pathMSBuild 'VC/Auxiliary/Build/vcvars32.bat';
+          }
+          ; # @insp https://github.com/microsoft/vswhere/wiki/Find-VC
+          cmd /s /c """$path"" $args && set" | where { $_ -match '(\w+)=(.*)' } | foreach {
+            $null = new-item -force -path "Env:\$($Matches[1])" -value $Matches[2];
+          }
+          $strToolSet='${{ matrix.toolset }}'
           @( '/std:c++14', '/std:c++17', '/std:c++20' ) | % { $strCppVer=$_;
           @( 'nope', 'max' ) | % { $strOptimize=$_;
             if ( 'msvc' -eq $strToolSet ) {
@@ -110,8 +116,6 @@ jobs:
             }
             echo "gtest_failures=$failures";
             echo "gtest_errors=$errors";
-          }
-          }
           }
           }
 
